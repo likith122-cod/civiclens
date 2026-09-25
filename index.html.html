@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CivicLens — AI Civic Complaint Prototype</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:#f5f7fb;color:#172033}
+header{height:70px;background:#102a43;color:white;display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:5}
+.logo{font-size:24px;font-weight:800}.logo span{color:#55d6be}.badge{font-size:12px;background:#234e70;padding:7px 10px;border-radius:20px}
+.layout{display:flex;min-height:calc(100vh - 70px)}aside{width:225px;background:#fff;border-right:1px solid #e4e8ef;padding:20px 12px}
+nav button{display:block;width:100%;border:0;background:transparent;text-align:left;padding:13px 14px;margin:4px 0;border-radius:9px;font-size:14px;cursor:pointer;color:#42526b}
+nav button.active,nav button:hover{background:#e8f7f4;color:#0b7565;font-weight:700}
+main{flex:1;padding:28px;max-width:1400px;margin:auto;width:100%}.page{display:none}.page.active{display:block}
+h1{margin:0 0 7px;font-size:29px}.sub{color:#718096;margin-bottom:24px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:22px}.card{background:#fff;border:1px solid #e6eaf0;border-radius:14px;padding:18px;box-shadow:0 2px 8px #1720330b}
+.metric{font-size:28px;font-weight:800;margin-top:8px}.label{font-size:12px;color:#718096}.green{color:#0b8b75}.orange{color:#d97706}.red{color:#dc3545}.blue{color:#2563eb}
+.grid{display:grid;grid-template-columns:1.25fr .75fr;gap:18px}.panel{background:#fff;border:1px solid #e6eaf0;border-radius:14px;padding:20px;margin-bottom:18px}.panel h2{font-size:17px;margin:0 0 15px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:12px 8px;border-bottom:1px solid #edf0f4;text-align:left}th{color:#718096;font-size:11px;text-transform:uppercase}
+.status{display:inline-block;padding:5px 8px;border-radius:20px;font-size:11px;font-weight:700}.received{background:#fff4d6;color:#9a6700}.progress{background:#e7f0ff;color:#2563eb}.resolved{background:#e4f7ef;color:#08795f}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.full{grid-column:1/-1}label{font-size:12px;font-weight:700;color:#526177;display:block;margin-bottom:7px}input,select,textarea{width:100%;padding:12px;border:1px solid #d9e0e8;border-radius:9px;font:inherit;background:#fff}textarea{min-height:110px;resize:vertical}
+.upload{border:2px dashed #cbd5e1;border-radius:12px;padding:26px;text-align:center;color:#64748b;cursor:pointer}.upload:hover{border-color:#55b9a8;background:#f7fffd}
+button.primary{border:0;background:#0b8b75;color:#fff;padding:12px 18px;border-radius:9px;font-weight:700;cursor:pointer}.secondary{border:1px solid #d5dce5;background:white;padding:10px 14px;border-radius:9px;cursor:pointer}
+.ai{background:linear-gradient(135deg,#effcf9,#f5f8ff);border:1px solid #cdece5}.airow{display:flex;justify-content:space-between;border-bottom:1px solid #e6eeeB;padding:10px 0}.airow:last-child{border:0}
+.bar{height:8px;background:#e8edf3;border-radius:10px;overflow:hidden}.bar i{display:block;height:100%;background:#0b8b75;border-radius:10px}
+.issue{display:flex;align-items:center;justify-content:space-between;padding:14px;border:1px solid #edf0f4;border-radius:10px;margin:8px 0}.dot{width:11px;height:11px;border-radius:50%;display:inline-block;margin-right:8px}.map{height:270px;border-radius:12px;background:#e8edf1;position:relative;overflow:hidden;background-image:linear-gradient(25deg,transparent 46%,#c8d1d8 47%,#c8d1d8 49%,transparent 50%),linear-gradient(120deg,transparent 48%,#c8d1d8 49%,#c8d1d8 51%,transparent 52%);background-size:120px 100px,160px 120px}
+.pin{position:absolute;width:18px;height:18px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#dc3545;border:3px solid white;box-shadow:0 2px 5px #0004}.pin::after{content:'';width:6px;height:6px;background:white;border-radius:50%;position:absolute;left:3px;top:3px}
+.toast{position:fixed;right:22px;bottom:22px;background:#102a43;color:#fff;padding:14px 18px;border-radius:10px;display:none;box-shadow:0 8px 30px #0003;z-index:10}
+.file{font-size:12px;color:#0b7565;margin-top:8px}
+@media(max-width:900px){aside{width:180px}.cards{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}}
+@media(max-width:650px){aside{display:none}main{padding:18px}.cards{grid-template-columns:1fr}.formgrid{grid-template-columns:1fr}.full{grid-column:auto}}
+</style>
+</head>
+<body>
+<header><div class="logo">Civic<span>Lens</span></div><div class="badge">AI MUNICIPAL TASK ENGINE • PROTOTYPE</div></header>
+<div class="layout">
+<aside><nav>
+<button class="active" onclick="showPage('dashboard',this)">📊 Command Center</button>
+<button onclick="showPage('report',this)">📸 Report an Issue</button>
+<button onclick="showPage('tasks',this)">🛠️ Municipal Tasks</button>
+<button onclick="showPage('map',this)">🗺️ Issue Map</button>
+<button onclick="showPage('about',this)">🤖 How AI Works</button>
+</nav></aside>
+<main>
+<section id="dashboard" class="page active">
+<h1>Municipal Command Center</h1><div class="sub">Turn citizen complaints into prioritized, actionable field tasks.</div>
+<div class="cards">
+<div class="card"><div class="label">TOTAL REPORTS</div><div class="metric">1,284</div><div class="green">↑ 12% this week</div></div>
+<div class="card"><div class="label">HIGH PRIORITY</div><div class="metric red">86</div><div class="label">Safety / critical</div></div>
+<div class="card"><div class="label">IN PROGRESS</div><div class="metric blue">214</div><div class="label">Assigned to teams</div></div>
+<div class="card"><div class="label">RESOLVED</div><div class="metric green">984</div><div class="label">76.6% of reports</div></div>
+</div>
+<div class="grid"><div class="panel"><h2>Recent AI-generated tasks</h2>
+<table><thead><tr><th>ID</th><th>Issue</th><th>Department</th><th>Priority</th><th>Status</th></tr></thead><tbody>
+<tr><td>#CL-1042</td><td>Pothole — Ring Road</td><td>Roads</td><td><b class="red">Critical</b></td><td><span class="status progress">In progress</span></td></tr>
+<tr><td>#CL-1041</td><td>Overflowing garbage</td><td>Sanitation</td><td><b class="orange">High</b></td><td><span class="status received">Assigned</span></td></tr>
+<tr><td>#CL-1040</td><td>Broken streetlight</td><td>Electrical</td><td><b>Medium</b></td><td><span class="status progress">In progress</span></td></tr>
+<tr><td>#CL-1039</td><td>Water leakage</td><td>Water Supply</td><td><b class="orange">High</b></td><td><span class="status resolved">Resolved</span></td></tr>
+</tbody></table></div>
+<div class="panel ai"><h2>🤖 AI workload insight</h2>
+<div class="airow"><span>Roads</span><b>38%</b></div><div class="bar"><i style="width:38%"></i></div>
+<div class="airow"><span>Sanitation</span><b>27%</b></div><div class="bar"><i style="width:27%"></i></div>
+<div class="airow"><span>Electrical</span><b>19%</b></div><div class="bar"><i style="width:19%"></i></div>
+<div class="airow"><span>Water Supply</span><b>16%</b></div><div class="bar"><i style="width:16%"></i></div>
+<p style="font-size:12px;color:#64748b;margin-top:18px">AI recommends deploying the next road-maintenance crew to the Ring Road cluster due to safety risk and multiple nearby reports.</p>
+</div></div>
+</section>
+
+<section id="report" class="page">
+<h1>Report a Civic Issue</h1><div class="sub">Upload a photo or describe the problem. CivicLens converts it into a structured municipal task.</div>
+<div class="panel"><div class="formgrid">
+<div><label>Issue title</label><input id="title" placeholder="e.g. Large pothole near college gate"></div>
+<div><label>Location</label><input id="loc" placeholder="e.g. Ring Road, Ward 12"></div>
+<div class="full"><label>Description</label><textarea id="desc" placeholder="Tell us what you observed..."></textarea></div>
+<div class="full"><label>Photo evidence</label><div class="upload" onclick="document.getElementById('photo').click()">📷 <b>Click to upload an image</b><br><small>JPG / PNG • Prototype AI simulation</small><input id="photo" type="file" accept="image/*" style="display:none" onchange="fileChosen(this)"><div class="file" id="filename"></div></div></div>
+<div><label>Citizen contact (optional)</label><input placeholder="Email or phone"></div>
+<div><label>Preferred language</label><select><option>English</option><option>Odia</option><option>Hindi</option></select></div>
+<div class="full"><button class="primary" onclick="analyze()">✨ Analyze with CivicLens AI</button></div>
+</div></div>
+<div id="analysis" class="panel ai" style="display:none"><h2>🤖 AI Analysis Result</h2>
+<div class="airow"><span>Detected issue</span><b id="aiIssue">Pothole / road damage</b></div>
+<div class="airow"><span>Department</span><b id="aiDept">Roads & Infrastructure</b></div>
+<div class="airow"><span>Severity</span><b class="red">HIGH</b></div>
+<div class="airow"><span>Safety risk</span><b>Vehicle / pedestrian hazard</b></div>
+<div class="airow"><span>Suggested action</span><b>Inspect → barricade if needed → patch road</b></div>
+<div class="airow"><span>Priority score</span><b>87 / 100</b></div>
+<br><button class="primary" onclick="createTask()">Create Municipal Task</button></div>
+</section>
+
+<section id="tasks" class="page"><h1>Municipal Task Queue</h1><div class="sub">AI-routed complaints converted into field-ready tasks.</div>
+<div class="panel"><div class="issue"><div><b>#CL-1042 · Repair pothole</b><br><small>Ring Road • Ward 12 • Photo verified</small></div><div><span class="status progress">In progress</span><br><button class="secondary" style="margin-top:7px" onclick="toast('Task opened: #CL-1042')">Open</button></div></div>
+<div class="issue"><div><b>#CL-1041 · Clear garbage overflow</b><br><small>Market Area • Ward 8 • 4 nearby reports clustered</small></div><div><span class="status received">Assigned</span><br><button class="secondary" style="margin-top:7px" onclick="toast('Task opened: #CL-1041')">Open</button></div></div>
+<div class="issue"><div><b>#CL-1040 · Restore streetlight</b><br><small>College Road • Ward 5 • AI confidence 92%</small></div><div><span class="status progress">In progress</span><br><button class="secondary" style="margin-top:7px" onclick="toast('Task opened: #CL-1040')">Open</button></div></div></div>
+</section>
+
+<section id="map" class="page"><h1>Civic Issue Map</h1><div class="sub">Hotspots help municipal teams see where problems are concentrated.</div>
+<div class="panel"><div class="map">
+<div class="pin" style="left:25%;top:34%"></div><div class="pin" style="left:49%;top:58%"></div><div class="pin" style="left:68%;top:25%;background:#f59e0b"></div><div class="pin" style="left:78%;top:65%;background:#0b8b75"></div>
+</div><div style="display:flex;gap:20px;margin-top:14px;font-size:12px"><span>🔴 High priority</span><span>🟠 Medium</span><span>🟢 Resolved</span></div></div>
+</section>
+
+<section id="about" class="page"><h1>How CivicLens AI Works</h1><div class="sub">A simple prototype of the complaint-to-task pipeline.</div>
+<div class="cards">
+<div class="card"><div class="label">01 • INPUT</div><div class="metric">📸</div><b>Citizen evidence</b><p style="font-size:13px;color:#64748b">Photo + description + location.</p></div>
+<div class="card"><div class="label">02 • AI</div><div class="metric">🤖</div><b>Classification</b><p style="font-size:13px;color:#64748b">Issue type, severity and safety risk.</p></div>
+<div class="card"><div class="label">03 • ROUTING</div><div class="metric">🔀</div><b>Department</b><p style="font-size:13px;color:#64748b">Routes to the correct municipal team.</p></div>
+<div class="card"><div class="label">04 • ACTION</div><div class="metric">🛠️</div><b>Task + tracking</b><p style="font-size:13px;color:#64748b">Field task, status and resolution evidence.</p></div>
+</div>
+<div class="panel"><h2>Prototype AI decision logic</h2>
+<table><tr><th>Signal</th><th>Example</th><th>Used for</th></tr>
+<tr><td>Image</td><td>Pothole visible</td><td>Issue classification</td></tr>
+<tr><td>Text</td><td>“Large, dangerous hole”</td><td>Severity context</td></tr>
+<tr><td>Location</td><td>Near school / main road</td><td>Safety + routing</td></tr>
+<tr><td>Duplicate reports</td><td>4 reports within 100m</td><td>Cluster + priority</td></tr>
+</table></div></section>
+</main></div>
+<div class="toast" id="toast"></div>
+<script>
+function showPage(id,btn){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));btn.classList.add('active')}
+function fileChosen(x){document.getElementById('filename').textContent=x.files[0]?'Selected: '+x.files[0].name:''}
+function analyze(){document.getElementById('analysis').style.display='block';toast('AI analysis complete — issue classified and routed.')}
+function createTask(){toast('Municipal task #CL-1043 created and assigned to Roads & Infrastructure.');showPage('tasks',document.querySelectorAll('nav button')[2])}
+function toast(msg){let t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',3000)}
+</script>
+</body></html>
